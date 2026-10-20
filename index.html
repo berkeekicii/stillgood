@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StillGood — Producer &amp; Consumer Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #1b4d38;
+    --green-mid: #2d6a4f;
+    --green-light: #e6f4ea;
+    --cream: #f7f4ec;
+    --card: #ffffff;
+    --ink: #16241d;
+    --muted: #647069;
+    --line: #e3decb;
+    --amber: #d97706;
+    --amber-bg: #fef3c7;
+    --red: #b91c1c;
+    --red-bg: #fee2e2;
+    --soil: #6b4423;
+    --soil-bg: #f5ebe0;
+    --blue: #1d4ed8;
+    --blue-bg: #dbeafe;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+    background: radial-gradient(circle at 50% 0%, #eef5f0 0%, #e4decb 100%);
+    color: var(--ink);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 18px 14px 36px;
+  }
+
+  /* Top Mode Switcher Bar (Üretici / Tüketici / Giriş) */
+  .top-switcher {
+    width: 100%;
+    max-width: 420px;
+    background: #16241d;
+    padding: 6px;
+    border-radius: 18px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 6px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 25px rgba(22, 36, 29, 0.16);
+  }
+  .mode-btn {
+    border: 0;
+    background: transparent;
+    color: #a3b3aa;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    padding: 10px 8px;
+    border-radius: 13px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+  }
+  .mode-btn.active {
+    background: #2d6a4f;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  /* Phone App Container */
+  .phone {
+    width: 100%;
+    max-width: 420px;
+    height: 760px;
+    background: #141a17;
+    border-radius: 42px;
+    padding: 11px;
+    box-shadow: 0 24px 60px rgba(20, 30, 24, 0.25);
+    position: relative;
+    border: 3px solid #2b3630;
+  }
+  .screen {
+    height: 100%;
+    background: var(--cream);
+    border-radius: 32px;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .notch {
+    width: 106px;
+    height: 20px;
+    background: #141a17;
+    border-radius: 0 0 14px 14px;
+    margin: 0 auto;
+  }
+  .app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px 8px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 800;
+    font-size: 18px;
+    color: var(--green);
+  }
+  .badge-pill {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: var(--green-light);
+    color: var(--green);
+  }
+  .icon-btn, .back {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--green);
+    height: 34px;
+    min-width: 34px;
+    padding: 0 10px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+
+  .view {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 16px 84px;
+  }
+  .view::-webkit-scrollbar { width: 0; }
+
+  /* Login Simulation Screen */
+  .login-wrap {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 14px;
+    padding: 10px 4px;
+  }
+  .login-hero {
+    background: linear-gradient(145deg, #1b4d38, #2d6a4f);
+    color: #fff;
+    border-radius: 24px;
+    padding: 24px 20px;
+    text-align: center;
+  }
+  .login-hero .logo-circle {
+    width: 64px;
+    height: 64px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.14);
+    display: inline-grid;
+    place-items: center;
+    font-size: 34px;
+    margin-bottom: 10px;
+  }
+  .login-hero h1 {
+    margin: 0 0 6px;
+    font-size: 26px;
+    letter-spacing: -0.02em;
+  }
+  .login-hero p {
+    margin: 0;
+    font-size: 13px;
+    color: #cfe8d9;
+  }
+  .role-card-btn {
+    width: 100%;
+    background: #fff;
+    border: 2px solid var(--line);
+    border-radius: 20px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.18s ease;
+  }
+  .role-card-btn:hover {
+    border-color: var(--green);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(27, 77, 56, 0.08);
+  }
+  .role-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: var(--green-light);
+    display: grid;
+    place-items: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+  .role-card-btn b {
+    display: block;
+    font-size: 16px;
+    color: var(--ink);
+  }
+  .role-card-btn span {
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  /* Scanner View (Producer) */
+  .camera-box {
+    background: #1c2922;
+    border-radius: 22px;
+    height: 230px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .cam-tag {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    background: rgba(0,0,0,0.45);
+    color: #86efac;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 8px;
+    font-family: monospace;
+  }
+  .reticle {
+    width: 150px;
+    height: 150px;
+    position: relative;
+    display: grid;
+    place-items: center;
+  }
+  .reticle i {
+    position: absolute;
+    width: 24px;
+    height: 24px;
+    border: 3px solid #4ade80;
+    border-radius: 4px;
+  }
+  .reticle i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+  .reticle i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; }
+  .reticle i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; }
+  .reticle i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+  .crop-emoji {
+    font-size: 76px;
+    filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
+  }
+  .laser {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    height: 3px;
+    background: #4ade80;
+    box-shadow: 0 0 12px #4ade80;
+    animation: scanMove 1s ease-in-out infinite alternate;
+  }
+  @keyframes scanMove { from { top: 24px; } to { top: 200px; } }
+
+  .crop-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .crop-tile {
+    background: #fff;
+    border: 2px solid var(--line);
+    border-radius: 14px;
+    padding: 10px 6px;
+    cursor: pointer;
+    text-align: center;
+    font-family: inherit;
+    transition: all 0.15s ease;
+  }
+  .crop-tile.on {
+    border-color: var(--green);
+    background: var(--green-light);
+  }
+  .crop-tile .e {
+    font-size: 26px;
+    display: block;
+    margin-bottom: 3px;
+  }
+  .crop-tile b {
+    font-size: 12px;
+    display: block;
+    color: var(--ink);
+  }
+  .crop-tile small {
+    font-size: 10px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  /* Result Card */
+  .result-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    padding: 18px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+  .status-Chip {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .status-Chip.imperfect { background: var(--amber-bg); color: var(--amber); }
+  .status-Chip.spoiled { background: var(--red-bg); color: var(--red); }
+  .status-Chip.premium { background: var(--blue-bg); color: var(--blue); }
+
+  .score-pills {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 12px 0;
+  }
+  .score-pill {
+    background: var(--cream);
+    border-radius: 12px;
+    padding: 8px;
+    font-size: 12px;
+  }
+  .score-pill b {
+    display: block;
+    font-size: 16px;
+    color: var(--green);
+  }
+
+  /* Action Buttons */
+  .btn-main, .btn-soil, .btn-secondary {
+    width: 100%;
+    border: 0;
+    border-radius: 14px;
+    padding: 14px;
+    font-family: inherit;
+    font-size: 14.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: transform 0.1s ease, opacity 0.15s ease;
+    margin-bottom: 8px;
+  }
+  .btn-main:active, .btn-soil:active, .btn-secondary:active {
+    transform: scale(0.98);
+  }
+  .btn-main {
+    background: var(--green);
+    color: #fff;
+  }
+  .btn-soil {
+    background: var(--soil);
+    color: #fff;
+  }
+  .btn-secondary {
+    background: #fff;
+    color: var(--green);
+    border: 1.5px solid var(--line);
+  }
+
+  /* Mini Counter Bar */
+  .mini-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .mini-stat {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 8px;
+    text-align: center;
+  }
+  .mini-stat b {
+    display: block;
+    font-size: 15px;
+    color: var(--green);
+  }
+  .mini-stat span {
+    font-size: 10.5px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+
+  /* Consumer Market View */
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    overflow-x: auto;
+  }
+  .filter-btn {
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--muted);
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .filter-btn.on {
+    background: var(--green);
+    color: #fff;
+    border-color: var(--green);
+  }
+  .market-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .prod-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .prod-art {
+    height: 80px;
+    background: var(--cream);
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    font-size: 44px;
+    position: relative;
+    margin-bottom: 8px;
+  }
+  .disc-tag {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background: var(--green);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 7px;
+    border-radius: 999px;
+  }
+  .disc-tag.soil { background: var(--soil); }
+  .prod-card b {
+    font-size: 13px;
+    display: block;
+    line-height: 1.25;
+  }
+  .prod-card .meta {
+    font-size: 11px;
+    color: var(--muted);
+    margin: 3px 0 8px;
+  }
+  .prod-foot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .prod-price {
+    font-weight: 800;
+    font-size: 14px;
+    color: var(--green);
+  }
+  .buy-mini {
+    border: 0;
+    background: var(--green);
+    color: #fff;
+    font-weight: 700;
+    font-size: 12px;
+    padding: 7px 11px;
+    border-radius: 10px;
+    cursor: pointer;
+  }
+
+  /* Bottom Navigation inside Phone */
+  .nav {
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+    background: #ffffff;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 6px;
+    z-index: 10;
+  }
+  .nav button {
+    border: 0;
+    background: none;
+    color: var(--muted);
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 6px 2px;
+    border-radius: 14px;
+    cursor: pointer;
+  }
+  .nav button.on {
+    background: var(--green-light);
+    color: var(--green);
+  }
+  .nav span {
+    display: block;
+    font-size: 16px;
+    margin-bottom: 2px;
+  }
+
+  /* Toast */
+  .toast {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 76px;
+    background: #16241d;
+    color: #fff;
+    padding: 11px 14px;
+    border-radius: 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(12px);
+    pointer-events: none;
+    transition: all 0.22s ease;
+    z-index: 25;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+</style>
+</head>
+<body>
+
+  <!-- TOP SWITCHER: Giriş / Üretici (Bahçe) / Tüketici (Market) -->
+  <div class="top-switcher" role="tablist" aria-label="Mode Switcher">
+    <button type="button" class="mode-btn active" id="topLoginBtn">🔐 Login</button>
+    <button type="button" class="mode-btn" id="topProducerBtn">🌱 Producer</button>
+    <button type="button" class="mode-btn" id="topConsumerBtn">🛒 Consumer</button>
+  </div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <header class="app-header">
+        <div class="brand">
+          <span>🌱</span> StillGood
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <span class="badge-pill" id="modeBadge">Welcome</span>
+          <button type="button" class="icon-btn" id="bell" title="Cart / Status">🛒 <span id="cartCount">0</span></button>
+        </div>
+      </header>
+
+      <main class="view" id="view"></main>
+
+      <nav class="nav" aria-label="Bottom Navigation">
+        <button type="button" data-tab="home"><span>⌂</span>Home</button>
+        <button type="button" data-tab="scan"><span>▣</span>Scan</button>
+        <button type="button" data-tab="market"><span>▣</span>Marketplace</button>
+        <button type="button" data-tab="history"><span>☰</span>History</button>
+      </nav>
+
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+<script>
+const crops = [
+  { id: "apple", name: "Bruised Apple", type: "Fruit", emoji: "🍎", grade: "imperfect", conf: 96, dmg: "14% Bruise", price: "$1.80/kg", off: "-35%" },
+  { id: "carrot", name: "Crooked Carrot", type: "Vegetables", emoji: "🥕", grade: "imperfect", conf: 95, dmg: "Odd Shape", price: "$1.40/kg", off: "-40%" },
+  { id: "tomato", name: "Spoiled Tomato", type: "Vegetables", emoji: "🍅", grade: "spoiled", conf: 98, dmg: "78% Rot", price: "Fertilize", off: "0.8kg Compost" },
+  { id: "lemon", name: "Scarred Lemon", type: "Fruit", emoji: "🍋", grade: "imperfect", conf: 94, dmg: "Peel Scar", price: "$1.60/kg", off: "-30%" },
+  { id: "pepper", name: "Fresh Pepper", type: "Vegetables", emoji: "🫑", grade: "premium", conf: 99, dmg: "0% Defect", price: "$3.50/kg", off: "Grade A" },
+  { id: "pear", name: "Rotten Pear", type: "Fruit", emoji: "🍐", grade: "spoiled", conf: 97, dmg: "82% Rot", price: "Fertilize", off: "0.7kg Compost" }
+];
+
+const marketItems = [
+  { id: "m1", name: "Bruised Apples", type: "Fruit", emoji: "🍎", meta: "2 kg • Garden #1", price: "$1.80", num: 1.80, tag: "-35%" },
+  { id: "m2", name: "Crooked Carrots", type: "Vegetables", emoji: "🥕", meta: "2 kg • Garden #4", price: "$1.40", num: 1.40, tag: "-40%" },
+  { id: "m3", name: "Scarred Lemons", type: "Fruit", emoji: "🍋", meta: "3 kg • Mersin Farm", price: "$1.60", num: 1.60, tag: "-30%" },
+  { id: "m4", name: "Bio-Fertilizer", type: "Fertilizer", emoji: "♻️", meta: "5 kg • From Spoiled Crops", price: "$3.00", num: 3.00, tag: "Compost" }
+];
+
+const logs = [
+  { name: "Bruised Apple", emoji: "🍎", action: "Sent to Discount Market", tag: "Imperfect" },
+  { name: "Spoiled Tomato", emoji: "🍅", action: "Converted to Bio-Fertilizer", tag: "Fertilized" }
+];
+
+let tab = "home"; // "home" (login), "scan", "scanning", "result", "market", "cart", "history"
+let selectedCrop = crops[0];
+let marketFilter = "All";
+let cart = [];
+let stats = { marketed: 4, fertilized: 2, scans: 6 };
+let scanTimeout = null;
+
+const view = document.getElementById("view");
+const toast = document.getElementById("toast");
+
+function notify(msg) {
+  toast.textContent = msg;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 1800);
+}
+
+function syncTopBar() {
+  document.getElementById("cartCount").textContent = cart.length;
+  const isLogin = tab === "home";
+  const isProducer = ["scan", "scanning", "result"].includes(tab);
+  const isConsumer = ["market", "cart"].includes(tab);
+
+  document.getElementById("topLoginBtn").classList.toggle("active", isLogin);
+  document.getElementById("topProducerBtn").classList.toggle("active", isProducer);
+  document.getElementById("topConsumerBtn").classList.toggle("active", isConsumer);
+
+  const badge = document.getElementById("modeBadge");
+  if (isLogin) badge.textContent = "Login";
+  else if (isProducer) badge.textContent = "🌱 Producer";
+  else if (isConsumer) badge.textContent = "🛒 Consumer";
+  else badge.textContent = "Activity Log";
+
+  document.querySelectorAll(".nav button").forEach(b => {
+    const activeTab = (tab === "scanning" || tab === "result") ? "scan" : (tab === "cart" ? "market" : tab);
+    b.classList.toggle("on", b.dataset.tab === activeTab);
+  });
+}
+
+function go(nextTab) {
+  if (scanTimeout) {
+    clearTimeout(scanTimeout);
+    scanTimeout = null;
+  }
+  tab = nextTab;
+  syncTopBar();
+  render();
+}
+
+function render() {
+  if (tab === "home") view.innerHTML = renderLogin();
+  else if (tab === "scan") view.innerHTML = renderScan();
+  else if (tab === "scanning") view.innerHTML = renderScanning();
+  else if (tab === "result") view.innerHTML = renderResult();
+  else if (tab === "market") view.innerHTML = renderMarket();
+  else if (tab === "cart") view.innerHTML = renderCart();
+  else if (tab === "history") view.innerHTML = renderHistory();
+  bindEvents();
+}
+
+/* 1. SIMULATED LOGIN SCREEN */
+function renderLogin() {
+  return `
+    <div class="login-wrap">
+      <div class="login-hero">
+        <div class="logo-circle">🌱</div>
+        <h1>StillGood</h1>
+        <p>AI Crop Grading &amp; Zero-Waste Marketplace</p>
+      </div>
+
+      <button type="button" class="role-card-btn" id="goScan">
+        <div class="role-icon">🚜</div>
+        <div>
+          <b>Producer Login (Garden)</b>
+          <span>Scan harvest with ML • Sell or Fertilize</span>
+        </div>
+      </button>
+
+      <button type="button" class="role-card-btn" id="goMarket">
+        <div class="role-icon">🛒</div>
+        <div>
+          <b>Consumer Login (Market)</b>
+          <span>Buy imperfect produce at 30–40% off</span>
+        </div>
+      </button>
+
+      <div class="mini-stats">
+        <div class="mini-stat"><b>${stats.scans}</b><span>ML Scans</span></div>
+        <div class="mini-stat"><b>${stats.marketed}</b><span>Marketed</span></div>
+        <div class="mini-stat"><b>${stats.fertilized}</b><span>Fertilized</span></div>
+      </div>
+    </div>
+  `;
+}
+
+/* 2. PRODUCER: SCANNER SIMULATION */
+function renderScan() {
+  return `
+    <div class="camera-box">
+      <span class="cam-tag">ML CAMERA • READY</span>
+      <div class="reticle">
+        <i></i><i></i><i></i><i></i>
+        <div class="crop-emoji">${selectedCrop.emoji}</div>
+      </div>
+    </div>
+
+    <div class="crop-grid">
+      ${crops.map(c => `
+        <button type="button" class="crop-tile ${c.id === selectedCrop.id ? "on" : ""}" data-crop="${c.id}">
+          <span class="e">${c.emoji}</span>
+          <b>${c.name.split(" ")[1]}</b>
+          <small>${c.dmg}</small>
+        </button>
+      `).join("")}
+    </div>
+
+    <button type="button" class="btn-main" id="capture">🔍 Scan Selected Crop with ML</button>
+
+    <div class="mini-stats">
+      <div class="mini-stat"><b>${stats.scans}</b><span>Total Scans</span></div>
+      <div class="mini-stat"><b>${stats.marketed}</b><span>To Market</span></div>
+      <div class="mini-stat"><b>${stats.fertilized}</b><span>To Fertilizer</span></div>
+    </div>
+  `;
+}
+
+function renderScanning() {
+  return `
+    <div class="camera-box" style="height:320px">
+      <span class="cam-tag">ANALYZING SURFACE…</span>
+      <div class="laser"></div>
+      <div class="reticle">
+        <i></i><i></i><i></i><i></i>
+        <div class="crop-emoji">${selectedCrop.emoji}</div>
+      </div>
+    </div>
+    <button type="button" class="btn-secondary" id="back">Cancel</button>
+  `;
+}
+
+function renderResult() {
+  const c = selectedCrop;
+  const label = c.grade === "imperfect"
+    ? "IMPERFECT • SAFE FOR SALE"
+    : c.grade === "spoiled"
+    ? "SPOILED • CONVERT TO FERTILIZER"
+    : "PREMIUM • SUPERMARKET GRADE";
+
+  return `
+    <div class="result-card">
+      <span class="status-Chip ${c.grade}">${label}</span>
+      <div style="font-size:72px;margin:6px 0">${c.emoji}</div>
+      <h3 style="margin:4px 0;font-size:20px">${c.name}</h3>
+
+      <div class="score-pills">
+        <div class="score-pill">
+          <span>ML Confidence</span>
+          <b>${c.conf}%</b>
+        </div>
+        <div class="score-pill">
+          <span>Surface Check</span>
+          <b>${c.dmg}</b>
+        </div>
+      </div>
+
+      ${c.grade === "spoiled" ? `
+        <button type="button" class="btn-soil" id="compost">♻️ Fertilize (Turn into Bio-Fertilizer)</button>
+      ` : c.grade === "imperfect" ? `
+        <button type="button" class="btn-main" id="list">🏷️ Send to Discount Market (${c.price} • ${c.off})</button>
+        <button type="button" class="btn-secondary" id="sale">🏪 Send to Local Stand</button>
+      ` : `
+        <button type="button" class="btn-main" id="sale">🏪 Send to Supermarket Shelf (${c.price})</button>
+        <button type="button" class="btn-secondary" id="list">🏷️ List on Direct Market</button>
+      `}
+
+      <button type="button" class="btn-secondary" id="back" style="margin-top:4px">← Scan Another Crop</button>
+    </div>
+  `;
+}
+
+/* 3. CONSUMER: MARKET SIMULATION */
+function renderMarket() {
+  const cats = ["All", "Fruit", "Vegetables", "Fertilizer"];
+  const items = marketItems.filter(i => marketFilter === "All" || i.type === marketFilter);
+
+  return `
+    <div class="filter-row">
+      ${cats.map(cat => `
+        <button type="button" class="filter-btn ${marketFilter === cat ? "on" : ""}" data-cat="${cat}">${cat}</button>
+      `).join("")}
+    </div>
+
+    <div class="market-grid">
+      ${items.map(item => `
+        <div class="prod-card">
+          <div>
+            <div class="prod-art">
+              <span class="disc-tag ${item.type === 'Fertilizer' ? 'soil' : ''}">${item.tag}</span>
+              ${item.emoji}
+            </div>
+            <b>${item.name}</b>
+            <div class="meta">${item.meta}</div>
+          </div>
+          <div class="prod-foot">
+            <span class="prod-price">${item.price}</span>
+            <button type="button" class="buy-mini" data-buy="${item.id}">+ Buy</button>
+          </div>
+        </div>
+      `).join("")}
+    </div>
+
+    ${cart.length > 0 ? `
+      <button type="button" class="btn-main" id="openCartBtn" style="margin-top:14px">
+        🛒 Complete Purchase (${cart.length} item${cart.length > 1 ? "s" : ""})
+      </button>
+    ` : ""}
+  `;
+}
+
+function renderCart() {
+  const total = cart.reduce((s, i) => s + i.num, 0);
+  return `
+    <div class="result-card" style="text-align:left">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <b style="font-size:18px">🛒 Market Basket</b>
+        <button type="button" class="back" id="back">← Back</button>
+      </div>
+      ${cart.length === 0 ? `
+        <p style="color:var(--muted);text-align:center;padding:24px 0">Basket is empty.</p>
+      ` : `
+        ${cart.map((item, idx) => `
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)">
+            <div>
+              <b>${item.emoji} ${item.name}</b>
+              <div style="font-size:12px;color:var(--muted)">${item.price} (${item.tag})</div>
+            </div>
+            <button type="button" class="icon-btn" data-del="${idx}">✕</button>
+          </div>
+        `).join("")}
+        <div style="display:flex;justify-content:space-between;font-weight:800;font-size:16px;margin:14px 0">
+          <span>Total</span>
+          <span style="color:var(--green)">$${total.toFixed(2)}</span>
+        </div>
+        <button type="button" class="btn-main" id="checkoutBtn">✅ One-Click Checkout</button>
+      `}
+    </div>
+  `;
+}
+
+function renderHistory() {
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <b style="font-size:16px;color:var(--green)">Recent Actions</b>
+      <button type="button" class="back" id="back">← Home</button>
+    </div>
+    ${logs.map(l => `
+      <div style="background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <b>${l.emoji} ${l.name}</b>
+          <div style="font-size:12px;color:var(--muted)">${l.action}</div>
+        </div>
+        <span class="badge-pill">${l.tag}</span>
+      </div>
+    `).join("")}
+  `;
+}
+
+function bindEvents() {
+  const goScan = document.getElementById("goScan");
+  if (goScan) goScan.onclick = () => { notify("Logged in as Producer 🌱"); go("scan"); };
+
+  const goMarket = document.getElementById("goMarket");
+  if (goMarket) goMarket.onclick = () => { notify("Logged in as Consumer 🛒"); go("market"); };
+
+  document.querySelectorAll("[data-crop]").forEach(btn => {
+    btn.onclick = () => {
+      selectedCrop = crops.find(c => c.id === btn.dataset.crop);
+      render();
+    };
+  });
+
+  const capture = document.getElementById("capture");
+  if (capture) {
+    capture.onclick = () => {
+      go("scanning");
+      scanTimeout = setTimeout(() => {
+        stats.scans += 1;
+        go("result");
+      }, 750);
+    };
+  }
+
+  const back = document.getElementById("back");
+  if (back) {
+    back.onclick = () => {
+      if (tab === "result" || tab === "scanning") go("scan");
+      else if (tab === "cart") go("market");
+      else go("home");
+    };
+  }
+
+  const list = document.getElementById("list");
+  if (list) {
+    list.onclick = () => {
+      marketItems.unshift({
+        id: "m" + Date.now(),
+        name: selectedCrop.name,
+        type: selectedCrop.type,
+        emoji: selectedCrop.emoji,
+        meta: "Freshly Scanned • Garden",
+        price: selectedCrop.price.split("/")[0],
+        num: 1.80,
+        tag: selectedCrop.off
+      });
+      logs.unshift({ name: selectedCrop.name, emoji: selectedCrop.emoji, action: "Listed on Discount Market", tag: "Marketed" });
+      stats.marketed += 1;
+      marketFilter = "All";
+      notify("Sent to Discount Market! 🏷️");
+      go("market");
+    };
+  }
+
+  const sale = document.getElementById("sale");
+  if (sale) {
+    sale.onclick = () => {
+      logs.unshift({ name: selectedCrop.name, emoji: selectedCrop.emoji, action: "Sent to Retail Shelf", tag: "Grade A" });
+      stats.marketed += 1;
+      notify("Approved for Supermarket Shelf! 🏪");
+      go("scan");
+    };
+  }
+
+  const compost = document.getElementById("compost");
+  if (compost) {
+    compost.onclick = () => {
+      logs.unshift({ name: selectedCrop.name, emoji: selectedCrop.emoji, action: "Converted to Bio-Fertilizer", tag: "Fertilized" });
+      stats.fertilized += 1;
+      notify("Converted to Organic Bio-Fertilizer! ♻️");
+      go("history");
+    };
+  }
+
+  document.querySelectorAll("[data-cat]").forEach(btn => {
+    btn.onclick = () => {
+      marketFilter = btn.dataset.cat;
+      render();
+    };
+  });
+
+  document.querySelectorAll("[data-buy]").forEach(btn => {
+    btn.onclick = () => {
+      const item = marketItems.find(m => m.id === btn.dataset.buy);
+      if (item) {
+        cart.push(item);
+        syncTopBar();
+        notify(`Added ${item.name} to basket 🛒`);
+        render();
+      }
+    };
+  });
+
+  const openCartBtn = document.getElementById("openCartBtn");
+  if (openCartBtn) openCartBtn.onclick = () => go("cart");
+
+  document.querySelectorAll("[data-del]").forEach(btn => {
+    btn.onclick = () => {
+      cart.splice(Number(btn.dataset.del), 1);
+      syncTopBar();
+      render();
+    };
+  });
+
+  const checkoutBtn = document.getElementById("checkoutBtn");
+  if (checkoutBtn) {
+    checkoutBtn.onclick = () => {
+      logs.unshift({ name: `${cart.length} Market Item(s)`, emoji: "🛍️", action: "Purchased by Consumer", tag: "Sold" });
+      cart = [];
+      syncTopBar();
+      notify("Order Completed! 🎉");
+      go("market");
+    };
+  }
+}
+
+document.getElementById("topLoginBtn").onclick = () => go("home");
+document.getElementById("topProducerBtn").onclick = () => go("scan");
+document.getElementById("topConsumerBtn").onclick = () => go("market");
+document.getElementById("bell").onclick = () => go("cart");
+
+document.querySelectorAll(".nav button").forEach(b => {
+  b.onclick = () => go(b.dataset.tab);
+});
+
+go("home");
+</script>
+</body>
+</html>
